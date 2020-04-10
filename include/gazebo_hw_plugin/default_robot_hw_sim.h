@@ -44,7 +44,9 @@
 // ros_control
 #include <control_toolbox/pid.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/joint_mode_interface.h>
 #include <hardware_interface/robot_hw.h>
+
 #include <joint_limits_interface/joint_limits.h>
 #include <joint_limits_interface/joint_limits_interface.h>
 #include <joint_limits_interface/joint_limits_rosparam.h>
@@ -109,6 +111,7 @@ protected:
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::VelocityJointInterface vj_interface_;
+  hardware_interface::JointModeInterface mj_interfface_;
 
   joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
   joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
@@ -122,6 +125,7 @@ protected:
   std::vector<double> joint_lower_limits_;
   std::vector<double> joint_upper_limits_;
   std::vector<double> joint_effort_limits_;
+  std::vector<hardware_interface::JointCommandModes > joint_modes_;
   std::vector<ControlMethod> joint_control_methods_;
   std::vector<control_toolbox::Pid> pid_controllers_;
   std::vector<double> joint_position_;
