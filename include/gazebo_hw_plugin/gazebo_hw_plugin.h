@@ -61,11 +61,11 @@
 namespace gazebo_hw_plugin
 {
 
-class GazeboRosControlPlugin : public gazebo::ModelPlugin
+class GazeboHwPlugin : public gazebo::ModelPlugin
 {
 public:
 
-  virtual ~GazeboRosControlPlugin();
+  virtual ~GazeboHwPlugin();
 
   // Overloaded Gazebo entry point
   virtual void Load(gazebo::physics::ModelPtr parent, sdf::ElementPtr sdf);

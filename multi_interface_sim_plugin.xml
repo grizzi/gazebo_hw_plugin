@@ -1,8 +1,8 @@
-<library path="lib/libdefault_robot_hw_sim">
+<library path="lib/libmulti_interface_robot_hw_sim">
 
   <class
-    name="gazebo_hw_plugin/DefaultRobotHWSim"
-    type="gazebo_hw_plugin::DefaultRobotHWSim"
+    name="gazebo_hw_plugin/MultiInterfaceRobotHWSim"
+    type="gazebo_hw_plugin::MultiInterfaceRobotHWSim"
     base_class_type="gazebo_hw_plugin::RobotHWSim">
     <description>
       A default robot simulation interface which constructs joint handles from an SDF/URDF.

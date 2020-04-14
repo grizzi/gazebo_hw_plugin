@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   CATKIN_DEPENDS ${PACKAGE_DEPENDENCIES}
   INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME} default_robot_hw_sim
+  LIBRARIES ${PROJECT_NAME} multi_interface_robot_hw_sim
 )
 
 link_directories(
@@ -39,11 +39,11 @@ include_directories(include
 add_library(${PROJECT_NAME} src/gazebo_hw_plugin.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-add_library(default_robot_hw_sim src/default_robot_hw_sim.cpp)
-target_link_libraries(default_robot_hw_sim ${catkin_LIBRARIES})
+add_library(multi_interface_robot_hw_sim src/multi_interface_robot_hw_sim.cpp)
+target_link_libraries(multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 
 ## Install
-install(TARGETS ${PROJECT_NAME} default_robot_hw_sim
+install(TARGETS ${PROJECT_NAME} multi_interface_robot_hw_sim
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
@@ -51,6 +51,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(FILES robot_hw_sim_plugins.xml
+install(FILES multi_interface_sim_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

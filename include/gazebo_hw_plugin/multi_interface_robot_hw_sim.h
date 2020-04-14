@@ -73,7 +73,7 @@
 namespace gazebo_hw_plugin
 {
 
-class DefaultRobotHWSim : public gazebo_hw_plugin::RobotHWSim
+class MultiInterfaceRobotHWSim : public gazebo_hw_plugin::RobotHWSim
 {
 public:
 
@@ -144,7 +144,7 @@ protected:
   bool e_stop_active_, last_e_stop_active_;
 };
 
-typedef boost::shared_ptr<DefaultRobotHWSim> DefaultRobotHWSimPtr;
+typedef boost::shared_ptr<MultiInterfaceRobotHWSim> MultiInterfaceRobotHWSimPtr;
 
 }
 

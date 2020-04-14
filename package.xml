@@ -28,6 +28,6 @@
   <depend>angles</depend>
 
   <export>
-    <gazebo_ros_control plugin="${prefix}/robot_hw_sim_plugins.xml"/>
+    <gazebo_hw_plugin plugin="${prefix}/multi_interface_sim_plugin.xml"/>
   </export>
 </package>

@@ -48,14 +48,14 @@
 namespace gazebo_hw_plugin
 {
 
-GazeboRosControlPlugin::~GazeboRosControlPlugin()
+GazeboHwPlugin::~GazeboHwPlugin()
 {
   // Disconnect from gazebo events
   update_connection_.reset();
 }
 
 // Overloaded Gazebo entry point
-void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::ElementPtr sdf)
+  void GazeboHwPlugin::Load(gazebo::physics::ModelPtr parent, sdf::ElementPtr sdf)
 {
   ROS_INFO_STREAM_NAMED("gazebo_hw_plugin","Loading gazebo_hw_plugin plugin");
 
@@ -100,15 +100,8 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
   }
 
   // Get the robot simulation interface type
-  if(sdf_->HasElement("robotSimType"))
-  {
-    robot_hw_sim_type_str_ = sdf_->Get<std::string>("robotSimType");
-  }
-  else
-  {
-    robot_hw_sim_type_str_ = "gazebo_hw_plugin/DefaultRobotHWSim";
-    ROS_DEBUG_STREAM_NAMED("loadThread","Using default plugin for RobotHWSim (none specified in URDF/SDF)\""<<robot_hw_sim_type_str_<<"\"");
-  }
+  robot_hw_sim_type_str_ = "gazebo_hw_plugin/MultiInterfaceRobotHWSim";
+  ROS_DEBUG_STREAM_NAMED("loadThread","Using "<< robot_hw_sim_type_str_ << " plugin");
 
   // temporary fix to bug regarding the robotNamespace in default_robot_hw_sim.cpp (see #637)
   std::string robot_ns = robot_namespace_;
@@ -119,7 +112,7 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
           }
       }else{
           robot_ns = "";
-          ROS_ERROR("GazeboRosControlPlugin missing <legacyModeNS> while using DefaultRobotHWSim, defaults to true.\n"
+          ROS_ERROR("GazeboHwPlugin missing <legacyModeNS> while using DefaultRobotHWSim, defaults to true.\n"
                     "This setting assumes you have an old package with an old implementation of DefaultRobotHWSim, "
                     "where the robotNamespace is disregarded and absolute paths are used instead.\n"
                     "If you do not want to fix this issue in an old package just set <legacyModeNS> to true.\n"
@@ -167,7 +160,7 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
   if (sdf_->HasElement("eStopTopic"))
   {
     const std::string e_stop_topic = sdf_->GetElement("eStopTopic")->Get<std::string>();
-    e_stop_sub_ = model_nh_.subscribe(e_stop_topic, 1, &GazeboRosControlPlugin::eStopCB, this);
+    e_stop_sub_ = model_nh_.subscribe(e_stop_topic, 1, &GazeboHwPlugin::eStopCB, this);
   }
 
   ROS_INFO_NAMED("gazebo_hw_plugin", "Starting gazebo_hw_plugin plugin in namespace: %s", robot_namespace_.c_str());
@@ -208,7 +201,7 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
     // Listen to the update event. This event is broadcast every simulation iteration.
     update_connection_ =
       gazebo::event::Events::ConnectWorldUpdateBegin
-      (boost::bind(&GazeboRosControlPlugin::Update, this));
+      (boost::bind(&GazeboHwPlugin::Update, this));
 
   }
   catch(pluginlib::LibraryLoadException &ex)
@@ -220,7 +213,7 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
 }
 
 // Called by the world update start event
-void GazeboRosControlPlugin::Update()
+void GazeboHwPlugin::Update()
 {
   // Get the simulation time and period
 #if GAZEBO_MAJOR_VERSION >= 8
@@ -270,7 +263,7 @@ void GazeboRosControlPlugin::Update()
 }
 
 // Called on world reset
-void GazeboRosControlPlugin::Reset()
+void GazeboHwPlugin::Reset()
 {
   // Reset timing variables to not pass negative update periods to controllers on world reset
   last_update_sim_time_ros_ = ros::Time();
@@ -278,7 +271,7 @@ void GazeboRosControlPlugin::Reset()
 }
 
 // Get the URDF XML from the parameter server
-std::string GazeboRosControlPlugin::getURDF(std::string param_name) const
+std::string GazeboHwPlugin::getURDF(std::string param_name) const
 {
   std::string urdf_string;
 
@@ -288,15 +281,15 @@ std::string GazeboRosControlPlugin::getURDF(std::string param_name) const
     std::string search_param_name;
     if (model_nh_.searchParam(param_name, search_param_name))
     {
-      ROS_INFO_ONCE_NAMED("gazebo_hw_plugin", "gazebo_hw_plugin plugin is waiting for model"
-        " URDF in parameter [%s] on the ROS param server.", search_param_name.c_str());
+      ROS_INFO_STREAM_THROTTLE(1.0, "gazebo_hw_plugin plugin is waiting for model" <<
+        " URDF in parameter [%s] on the ROS param server." << search_param_name.c_str());
 
       model_nh_.getParam(search_param_name, urdf_string);
     }
     else
     {
-      ROS_INFO_ONCE_NAMED("gazebo_hw_plugin", "gazebo_hw_plugin plugin is waiting for model"
-        " URDF in parameter [%s] on the ROS param server.", robot_description_.c_str());
+      ROS_INFO_STREAM_THROTTLE(1.0, "gazebo_hw_plugin plugin is waiting for model"
+        " URDF in parameter [%s] on the ROS param server." << robot_description_.c_str());
 
       model_nh_.getParam(param_name, urdf_string);
     }
@@ -309,19 +302,19 @@ std::string GazeboRosControlPlugin::getURDF(std::string param_name) const
 }
 
 // Get Transmissions from the URDF
-bool GazeboRosControlPlugin::parseTransmissionsFromURDF(const std::string& urdf_string)
+bool GazeboHwPlugin::parseTransmissionsFromURDF(const std::string& urdf_string)
 {
   transmission_interface::TransmissionParser::parse(urdf_string, transmissions_);
   return true;
 }
 
 // Emergency stop callback
-void GazeboRosControlPlugin::eStopCB(const std_msgs::BoolConstPtr& e_stop_active)
+void GazeboHwPlugin::eStopCB(const std_msgs::BoolConstPtr& e_stop_active)
 {
   e_stop_active_ = e_stop_active->data;
 }
 
 
 // Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboRosControlPlugin);
+GZ_REGISTER_MODEL_PLUGIN(GazeboHwPlugin);
 } // namespace
