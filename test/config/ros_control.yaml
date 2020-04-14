@@ -2,3 +2,29 @@
 joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50  
+
+# Mode controller: for mode switching
+joint_mode_controller:
+  type: joint_mode_controller/JointModeController
+  joints: ["joint1", "joint2"]
+
+# Position control
+joint_position_controller:
+  type: position_controllers/JointGroupPositionController
+  joints: ["joint1", "joint2"]
+
+# Velocity control
+joint_velocity_controller:
+  type: velocity_controllers/JointGroupVelocityController
+  joints: ["joint1", "joint2"]
+
+# Position control with effort commands (requires effort interface)
+# bug in the code: robot_namespace is not namespaced. The controller
+# looks for /robot_namespace param
+joint_position_effort_controller:
+  type: effort_controllers/JointGroupPositionController
+  joints: ["joint1", "joint2"]
+  joint1:
+    pid: {p: 1000, i: 0.1, d: 0}
+  joint2:
+    pid: {p: 1000, i: 0.1, d: 0}

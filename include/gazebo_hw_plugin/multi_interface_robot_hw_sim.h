@@ -73,6 +73,14 @@
 namespace gazebo_hw_plugin
 {
 
+using mode_t = hardware_interface::JointCommandModes;
+const std::map<mode_t, std::string> mapModeToString{{mode_t::ERROR, "ERROR"},
+                                                    {mode_t::EMERGENCY_STOP, "EMERGENCY_STOP"},
+                                                    {mode_t::NOMODE, "NOMODE"},
+                                                    {mode_t::MODE_POSITION, "MODE_POSITION"},
+                                                    {mode_t::MODE_VELOCITY, "MODE_VELOCITY"},
+                                                    {mode_t::MODE_EFFORT, "MODE_EFFORT"}};
+
 class MultiInterfaceRobotHWSim : public gazebo_hw_plugin::RobotHWSim
 {
 public:
@@ -92,7 +100,7 @@ public:
 
 protected:
   // Methods used to control a joint.
-  enum ControlMethod {EFFORT, POSITION, POSITION_PID, VELOCITY, VELOCITY_PID};
+  enum ControlMethod {EFFORT, POSITION, VELOCITY};
 
   // Register the limits of the joint specified by joint_name and joint_handle. The limits are
   // retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
@@ -105,13 +113,15 @@ protected:
                            int *const joint_type, double *const lower_limit,
                            double *const upper_limit, double *const effort_limit);
 
+  double computePositionError(const double reference, const int joint_index);
+
   unsigned int n_dof_;
 
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::VelocityJointInterface vj_interface_;
-  hardware_interface::JointModeInterface mj_interfface_;
+  hardware_interface::JointModeInterface     jm_interface_;
 
   joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
   joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
@@ -126,6 +136,8 @@ protected:
   std::vector<double> joint_upper_limits_;
   std::vector<double> joint_effort_limits_;
   std::vector<hardware_interface::JointCommandModes > joint_modes_;
+  std::vector<hardware_interface::JointCommandModes > joint_modes_current_;
+
   std::vector<ControlMethod> joint_control_methods_;
   std::vector<control_toolbox::Pid> pid_controllers_;
   std::vector<double> joint_position_;
@@ -135,6 +147,7 @@ protected:
   std::vector<double> joint_position_command_;
   std::vector<double> last_joint_position_command_;
   std::vector<double> joint_velocity_command_;
+  std::vector<double> joint_initial_position_at_switch_;
 
   std::vector<gazebo::physics::JointPtr> sim_joints_;
 

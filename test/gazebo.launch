@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
 
+    <!-- Give the robot a name -->
+    <arg name="robot_name"  default="rrbot"/>
+
     <!-- these are the arguments you can pass this launch file, for example paused:=true -->
     <arg name="paused"          default="false"/>
     <arg name="use_sim_time"    default="true"/>
@@ -19,14 +22,21 @@
     </include>
 
     <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="$(arg robot_name)/robot_description"
+           command="$(find xacro)/xacro --inorder '$(find gazebo_hw_plugin)/resources/model.xacro'" />
+
+<!--    for the group position controller (bug in ros_control)-->
     <param name="robot_description"
            command="$(find xacro)/xacro --inorder '$(find gazebo_hw_plugin)/resources/model.xacro'" />
 
+
     <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-          args="-urdf -model rrbot -param robot_description"/>
+          args="-urdf -model $(arg robot_name) -param $(arg robot_name)/robot_description"/>
 
     <!-- ros_control rrbot launch file -->
-    <!--include file="$(find gazebo_hw_plugin)/test/control.launch" /-->
+    <include file="$(find gazebo_hw_plugin)/test/control.launch">
+        <arg name="robot_name" value="$(arg robot_name)"/>
+    </include>
 
 </launch>
