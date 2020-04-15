@@ -26,6 +26,7 @@
   <depend>joint_limits_interface</depend>
   <depend>urdf</depend>
   <depend>angles</depend>
+  <depend>message_logger</depend>
 
   <export>
     <gazebo_hw_plugin plugin="${prefix}/multi_interface_sim_plugin.xml"/>

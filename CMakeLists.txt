@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(gazebo_hw_plugin)
 
 set(PACKAGE_DEPENDENCIES
+    message_logger
     gazebo_dev
     roscpp
     std_msgs

@@ -99,6 +99,16 @@ GazeboHwPlugin::~GazeboHwPlugin()
     robot_description_ = "robot_description"; // default
   }
 
+  // Get robot_description ROS param name
+  if (sdf_->HasElement("perfectPosVelControl"))
+  {
+    perfect_posvel_ctrl_ = sdf_->GetElement("perfectPosVelControl")->Get<bool>();
+  }
+  else
+  {
+    perfect_posvel_ctrl_ = false;
+  }
+
   // Get the robot simulation interface type
   robot_hw_sim_type_str_ = "gazebo_hw_plugin/MultiInterfaceRobotHWSim";
   ROS_DEBUG_STREAM_NAMED("loadThread","Using "<< robot_hw_sim_type_str_ << " plugin");
@@ -187,7 +197,7 @@ GazeboHwPlugin::~GazeboHwPlugin()
     urdf::Model urdf_model;
     const urdf::Model *const urdf_model_ptr = urdf_model.initString(urdf_string) ? &urdf_model : NULL;
 
-    if(!robot_hw_sim_->initSim(robot_ns, model_nh_, parent_model_, urdf_model_ptr, transmissions_))
+    if(!robot_hw_sim_->initSim(robot_ns, model_nh_, parent_model_, urdf_model_ptr, transmissions_, perfect_posvel_ctrl_))
     {
       ROS_FATAL_NAMED("gazebo_hw_plugin","Could not initialize robot simulation interface");
       return;

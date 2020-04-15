@@ -57,7 +57,9 @@ bool MultiInterfaceRobotHWSim::initSim(
     ros::NodeHandle model_nh,
     gazebo::physics::ModelPtr parent_model,
     const urdf::Model *const urdf_model,
-    std::vector<transmission_interface::TransmissionInfo> transmissions) {
+    std::vector<transmission_interface::TransmissionInfo> transmissions,
+    bool perfect_posvel_ctrl) {
+
   // getJointLimits() searches joint_limit_nh for joint limit parameters. The format of each
   // parameter's name is "joint_limits/<joint name>". An example is "joint_limits/axle_joint".
   const ros::NodeHandle joint_limit_nh(model_nh);
@@ -82,9 +84,13 @@ bool MultiInterfaceRobotHWSim::initSim(
   joint_initial_position_at_switch_.resize(n_dof_);
 
   // Initialize values
+  perfect_posvel_ctrl_ = perfect_posvel_ctrl;
+  if (perfect_posvel_ctrl_)
+    ROS_INFO("\n\n\n\n\nPerfect position/velocity control enabled: EFFORT control will NOT work\n\n\n\n\n");
+
   for (unsigned int j = 0; j < n_dof_; j++) {
     // Check that this transmission has one joint
-    if (transmissions[j].joints_.size() == 0) {
+    if (transmissions[j].joints_.empty()) {
       ROS_ERROR_STREAM_NAMED("default_robot_hw_sim", "Transmission " << transmissions[j].name_
                                                                      << " has no associated joints.");
       return false;
@@ -224,6 +230,19 @@ bool MultiInterfaceRobotHWSim::initSim(
     if (physics_type_.empty()) {
       ROS_WARN_STREAM_NAMED("default_robot_hw_sim", "No physics type found.");
     }
+
+    /*
+     joint->SetParam("fmax") must be called if joint->SetAngle() or joint->SetParam("vel") are
+     going to be called. joint->SetParam("fmax") must *not* be called if joint->SetForce() is
+     going to be called.
+     */
+#if GAZEBO_MAJOR_VERSION > 2
+    if (perfect_posvel_ctrl_) {
+      joint->SetParam("fmax", 0, joint_effort_limits_[j]);
+#else
+      joint->SetMaxForce(0, joint_effort_limits_[j]);
+#endif
+    }
   }
 
   // Register interfaces
@@ -280,66 +299,47 @@ void MultiInterfaceRobotHWSim::writeSim(ros::Time time, ros::Duration period) {
 
   static size_t velocity_idx = 0;
   for (unsigned int j = 0; j < n_dof_; j++) {
+
     if (joint_modes_[j] != joint_modes_current_[j]) {
       ROS_INFO_STREAM(
           "Joint " << joint_names_[j] << " switched to [" << mapModeToString.at(joint_modes_[j]) << "] mode.");
       joint_modes_current_[j] = joint_modes_[j];
       joint_initial_position_at_switch_[j] = joint_position_[j];
     }
+
     const auto &mode = joint_modes_current_[j];
     switch (mode) {
       case hardware_interface::JointCommandModes::NOMODE:
       case hardware_interface::JointCommandModes::EMERGENCY_STOP:
       case hardware_interface::JointCommandModes::ERROR: {
-        double error;
-        error = computePositionError(joint_initial_position_at_switch_[j], j);
-        const double effort_limit = joint_effort_limits_[j];
-        const double effort = clamp(pid_controllers_[j].computeCommand(error, period),
-                                    -effort_limit, effort_limit);
-
-        sim_joints_[j]->SetForce(0, effort);
+        trackPositionCommand(joint_initial_position_at_switch_[j], j, period);
         break;
       }
 
       case hardware_interface::JointCommandModes::MODE_POSITION: {
-        double error;
-        switch (joint_types_[j]) {
-          case urdf::Joint::REVOLUTE:
-            angles::shortest_angular_distance_with_limits(joint_position_[j],
-                                                          joint_position_command_[j],
-                                                          joint_lower_limits_[j],
-                                                          joint_upper_limits_[j],
-                                                          error);
-            break;
-          case urdf::Joint::CONTINUOUS:
-            error = angles::shortest_angular_distance(joint_position_[j],
-                                                      joint_position_command_[j]);
-            break;
-          default:error = joint_position_command_[j] - joint_position_[j];
-        }
-
-        const double effort_limit = joint_effort_limits_[j];
-        const double effort = clamp(pid_controllers_[j].computeCommand(error, period),
-                                    -effort_limit, effort_limit);
-        sim_joints_[j]->SetForce(0, effort);
+        trackPositionCommand(joint_position_command_[j], j, period);
         break;
       }
 
       case hardware_interface::JointCommandModes::MODE_VELOCITY: {
-        double error;
-        double derror;
-        velocity_idx++;
-        double ref = joint_initial_position_at_switch_[j] + period.toSec() * joint_velocity_command_[j] * velocity_idx;
-        error = computePositionError(ref, j);
-        derror = joint_velocity_command_[j] - joint_velocity_[j];
-        const double effort_limit = joint_effort_limits_[j];
-        const double effort = clamp(pid_controllers_[j].computeCommand(error, derror, period),
-                                    -effort_limit, effort_limit);
-        sim_joints_[j]->SetForce(0, effort);
+        if (perfect_posvel_ctrl_){
+          if (physics_type_.compare("ode") == 0)
+            sim_joints_[j]->SetParam("vel", 0, joint_velocity_command_[j]);
+          else
+            sim_joints_[j]->SetVelocity(0, joint_velocity_command_[j]);
+          break;
+        }
+        double joint_position_desired = joint_initial_position_at_switch_[j] += period.toSec() * joint_velocity_command_[j];
+        trackPositionCommand(joint_position_desired, j, period);
         break;
       }
 
       case hardware_interface::JointCommandModes::MODE_EFFORT: {
+        if (perfect_posvel_ctrl_){
+          ROS_WARN_STREAM_THROTTLE(1.0, "EFFORT control not available when perfect position/velocity tracking. Freezing");
+          trackPositionCommand(joint_position_[j], j, period);
+          break;
+        }
         sim_joints_[j]->SetForce(0, joint_effort_command_[j]);
         break;
       }
@@ -457,6 +457,27 @@ void MultiInterfaceRobotHWSim::registerJointLimits(const std::string &joint_name
   }
 }
 
+
+void MultiInterfaceRobotHWSim::trackPositionCommand(const double joint_position_desired, const int joint_index, const ros::Duration& dt){
+  if (perfect_posvel_ctrl_) {
+#if GAZEBO_MAJOR_VERSION >= 9
+    sim_joints_[joint_index]->SetPosition(0, joint_position_desired, true);
+#else
+    ROS_WARN_ONCE("The default_robot_hw_sim plugin is using the Joint::SetPosition method without preserving the link velocity.");
+        ROS_WARN_ONCE("As a result, gravity will not be simulated correctly for your model.");
+        ROS_WARN_ONCE("Please set gazebo_pid parameters, switch to the VelocityJointInterface or EffortJointInterface, or upgrade to Gazebo 9.");
+        ROS_WARN_ONCE("For details, see https://github.com/ros-simulation/gazebo_ros_pkgs/issues/612");
+        sim_joints_[j]->SetPosition(0, joint_position_desired);
+#endif
+  } else {
+    double error = computePositionError(joint_position_desired, joint_index);
+    const double effort_limit = joint_effort_limits_[joint_index];
+    const double effort = clamp(pid_controllers_[joint_index].computeCommand(error, dt),
+                                -effort_limit, effort_limit);
+    sim_joints_[joint_index]->SetForce(0, effort);
+  }
+}
+
 double MultiInterfaceRobotHWSim::computePositionError(const double reference, const int joint_index) {
   double error;
   switch (joint_types_[joint_index]) {
@@ -471,8 +492,7 @@ double MultiInterfaceRobotHWSim::computePositionError(const double reference, co
       error = angles::shortest_angular_distance(joint_position_[joint_index],
                                                 reference);
       break;
-    default:
-      error = joint_position_command_[joint_index] - joint_position_[joint_index];
+    default:error = joint_position_command_[joint_index] - joint_position_[joint_index];
   }
   return error;
 }

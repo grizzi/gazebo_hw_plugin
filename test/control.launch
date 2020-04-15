@@ -10,7 +10,7 @@
 
     <!-- load the controllers -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-      output="screen" ns="$(arg robot_name)" args="joint_state_controller"/>
+      output="screen" ns="$(arg robot_name)" args="joint_state_controller joint_mode_controller"/>
 
     <!-- Controller manager gui   -->
     <node name="controller_manager_gui" pkg="rqt_controller_manager" type="rqt_controller_manager"

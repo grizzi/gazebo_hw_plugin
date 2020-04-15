@@ -90,7 +90,8 @@ public:
     ros::NodeHandle model_nh,
     gazebo::physics::ModelPtr parent_model,
     const urdf::Model *const urdf_model,
-    std::vector<transmission_interface::TransmissionInfo> transmissions);
+    std::vector<transmission_interface::TransmissionInfo> transmissions,
+    bool perfect_pos_vel_crtl=false);
 
   virtual void readSim(ros::Time time, ros::Duration period);
 
@@ -114,6 +115,7 @@ protected:
                            double *const upper_limit, double *const effort_limit);
 
   double computePositionError(const double reference, const int joint_index);
+  void trackPositionCommand(const double joint_position_desired, const int joint_index, const ros::Duration& dt);
 
   unsigned int n_dof_;
 
@@ -155,6 +157,7 @@ protected:
 
   // e_stop_active_ is true if the emergency stop is active.
   bool e_stop_active_, last_e_stop_active_;
+  bool perfect_posvel_ctrl_ = false;
 };
 
 typedef boost::shared_ptr<MultiInterfaceRobotHWSim> MultiInterfaceRobotHWSimPtr;

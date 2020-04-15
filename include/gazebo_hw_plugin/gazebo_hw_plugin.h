@@ -110,6 +110,7 @@ protected:
   std::vector<transmission_interface::TransmissionInfo> transmissions_;
 
   // Robot simulator interface
+  bool perfect_posvel_ctrl_;
   std::string robot_hw_sim_type_str_;
   boost::shared_ptr<gazebo_hw_plugin::RobotHWSim> robot_hw_sim_;
 

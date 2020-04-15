@@ -87,7 +87,8 @@ namespace gazebo_hw_plugin {
         ros::NodeHandle model_nh,
         gazebo::physics::ModelPtr parent_model,
         const urdf::Model *const urdf_model,
-        std::vector<transmission_interface::TransmissionInfo> transmissions) = 0;
+        std::vector<transmission_interface::TransmissionInfo> transmissions,
+        bool perfect_pos_vel_control=false) = 0;
 
     /// \brief Read state data from the simulated robot hardware
     ///
