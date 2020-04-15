@@ -50,18 +50,6 @@
 
 namespace gazebo_hw_plugin {
 
-  // Struct for passing loaded joint data
-  struct JointData
-  {
-    std::string name_;
-    std::string hardware_interface_;
-
-    JointData(const std::string& name, const std::string& hardware_interface) :
-      name_(name),
-      hardware_interface_(hardware_interface)
-    {}
-  };
-
   /// \brief Gazebo plugin version of RobotHW
   ///
   /// An object of class RobotHWSim represents a robot's simulated hardware.

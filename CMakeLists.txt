@@ -40,7 +40,9 @@ include_directories(include
 add_library(${PROJECT_NAME} src/gazebo_hw_plugin.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-add_library(multi_interface_robot_hw_sim src/multi_interface_robot_hw_sim.cpp)
+add_library(multi_interface_robot_hw_sim
+        src/joint_data.cpp
+        src/multi_interface_robot_hw_sim.cpp)
 target_link_libraries(multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 
 ## Install
