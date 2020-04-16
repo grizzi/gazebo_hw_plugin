@@ -64,6 +64,7 @@
 
 // gazebo_hw_plugin
 #include <gazebo_hw_plugin/robot_hw_sim.h>
+#include <gazebo_hw_plugin/joint_data_group.hpp>
 
 // URDF
 #include <urdf/model.h>
@@ -101,54 +102,55 @@ public:
 
 protected:
   // Methods used to control a joint.
-  enum ControlMethod {EFFORT, POSITION, VELOCITY};
+//  enum ControlMethod {EFFORT, POSITION, VELOCITY};
 
   // Register the limits of the joint specified by joint_name and joint_handle. The limits are
   // retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
   // Return the joint's type, lower position limit, upper position limit, and effort limit.
-  void registerJointLimits(const std::string& joint_name,
-                           const hardware_interface::JointHandle& joint_handle,
-                           const ControlMethod ctrl_method,
-                           const ros::NodeHandle& joint_limit_nh,
-                           const urdf::Model *const urdf_model,
-                           int *const joint_type, double *const lower_limit,
-                           double *const upper_limit, double *const effort_limit);
+//  void registerJointLimits(const std::string& joint_name,
+//                           const hardware_interface::JointHandle& joint_handle,
+//                           const ControlMethod ctrl_method,
+//                           const ros::NodeHandle& joint_limit_nh,
+//                           const urdf::Model *const urdf_model,
+//                           int *const joint_type, double *const lower_limit,
+//                           double *const upper_limit, double *const effort_limit);
 
-  double computePositionError(const double reference, const int joint_index);
-  void trackPositionCommand(const double joint_position_desired, const int joint_index, const ros::Duration& dt);
+  //double computePositionError(const double reference, const int joint_index);
+  void setPositionCommand(const double position_desired, gazebo::physics::JointPtr sim_joint)
 
   unsigned int n_dof_;
 
-  hardware_interface::JointStateInterface    js_interface_;
-  hardware_interface::EffortJointInterface   ej_interface_;
-  hardware_interface::PositionJointInterface pj_interface_;
-  hardware_interface::VelocityJointInterface vj_interface_;
-  hardware_interface::JointModeInterface     jm_interface_;
+//  hardware_interface::JointStateInterface    js_interface_;
+//  hardware_interface::EffortJointInterface   ej_interface_;
+//  hardware_interface::PositionJointInterface pj_interface_;
+//  hardware_interface::VelocityJointInterface vj_interface_;
+//  hardware_interface::JointModeInterface     jm_interface_;
+//
+//  joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
+//  joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
+//  joint_limits_interface::PositionJointSaturationInterface pj_sat_interface_;
+//  joint_limits_interface::PositionJointSoftLimitsInterface pj_limits_interface_;
+//  joint_limits_interface::VelocityJointSaturationInterface vj_sat_interface_;
+//  joint_limits_interface::VelocityJointSoftLimitsInterface vj_limits_interface_;
 
-  joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
-  joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
-  joint_limits_interface::PositionJointSaturationInterface pj_sat_interface_;
-  joint_limits_interface::PositionJointSoftLimitsInterface pj_limits_interface_;
-  joint_limits_interface::VelocityJointSaturationInterface vj_sat_interface_;
-  joint_limits_interface::VelocityJointSoftLimitsInterface vj_limits_interface_;
+  JointDataGroup joints_;
+//  std::vector<std::string> joint_names_;
+//  std::vector<int> joint_types_;
+//  std::vector<double> joint_lower_limits_;
+//  std::vector<double> joint_upper_limits_;
+//  std::vector<double> joint_effort_limits_;
+//  std::vector<hardware_interface::JointCommandModes > joint_modes_;
+//  std::vector<hardware_interface::JointCommandModes > joint_modes_current_;
 
-  std::vector<std::string> joint_names_;
-  std::vector<int> joint_types_;
-  std::vector<double> joint_lower_limits_;
-  std::vector<double> joint_upper_limits_;
-  std::vector<double> joint_effort_limits_;
-  std::vector<hardware_interface::JointCommandModes > joint_modes_;
-  std::vector<hardware_interface::JointCommandModes > joint_modes_current_;
-
-  std::vector<ControlMethod> joint_control_methods_;
-  std::vector<control_toolbox::Pid> pid_controllers_;
-  std::vector<double> joint_position_;
-  std::vector<double> joint_velocity_;
-  std::vector<double> joint_effort_;
-  std::vector<double> joint_effort_command_;
-  std::vector<double> joint_position_command_;
-  std::vector<double> last_joint_position_command_;
-  std::vector<double> joint_velocity_command_;
+//  std::vector<ControlMethod> joint_control_methods_;
+//  std::vector<control_toolbox::Pid> pid_controllers_;
+//  std::vector<double> joint_position_;
+//  std::vector<double> joint_velocity_;
+//  std::vector<double> joint_effort_;
+//  std::vector<double> joint_effort_command_;
+//  std::vector<double> joint_position_command_;
+//  std::vector<double> last_joint_position_command_;
+//  std::vector<double> joint_velocity_command_;
   std::vector<double> joint_initial_position_at_switch_;
 
   std::vector<gazebo::physics::JointPtr> sim_joints_;

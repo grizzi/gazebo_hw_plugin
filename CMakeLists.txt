@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gazebo_hw_plugin)
 
+add_definitions(-std=c++17)
+
 set(PACKAGE_DEPENDENCIES
     message_logger
     gazebo_dev
