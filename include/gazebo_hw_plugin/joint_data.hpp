@@ -7,6 +7,9 @@
  */
 #pragma once
 
+// std
+#include <memory>
+
 // ros_control
 #include <control_toolbox/pid.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -41,66 +44,83 @@ namespace gazebo_hw_plugin {
 
 class JointData {
  public:
+  using handle_ptr = std::unique_ptr<JointHandle>;
+
+  using state_handle_ptr = std::unique_ptr<JointStateHandle>;
+  using mode_handle_ptr = std::unique_ptr<JointModeHandle>;
+
+  using eff_soft_handle_ptr = std::unique_ptr<EffortJointSoftLimitsHandle>;
+  using pos_soft_handle_ptr = std::unique_ptr<PositionJointSoftLimitsHandle>;
+  using vel_soft_handle_ptr = std::unique_ptr<VelocityJointSoftLimitsHandle>;
+
+  using eff_sat_handle_ptr = std::unique_ptr<EffortJointSaturationHandle>;
+  using pos_sat_handle_ptr = std::unique_ptr<PositionJointSaturationHandle>;
+  using vel_sat_handle_ptr = std::unique_ptr<VelocityJointSaturationHandle>;
+
+
   JointData(const std::string& name);
   ~JointData();
 
  private:
   std::string name_;
   int type_;
+  state_handle_ptr state_handle_;
+  mode_handle_ptr mode_handle_;
 
   // limits
+  bool has_limits_;
+  bool has_soft_limits_;
   double lower_limit_;
   double upper_limit_;
   double effort_limit_;
-  EffortJointSoftLimitsHandle effort_limits_handle_;
-  PositionJointSoftLimitsHandle position_limits_handle_;
-  VelocityJointSoftLimitsHandle velocity_limits_handle_;
-  EffortJointSaturationHandle effort_sat_handle_;
-  PositionJointSaturationHandle position_sat_handle_;
-  VelocityJointSaturationHandle velocity_sat_handle_;
+  eff_soft_handle_ptr effort_limits_handle_;
+  pos_soft_handle_ptr position_limits_handle_;
+  vel_soft_handle_ptr velocity_limits_handle_;
+  eff_sat_handle_ptr effort_sat_handle_;
+  pos_sat_handle_ptr position_sat_handle_;
+  vel_sat_handle_ptr velocity_sat_handle_;
 
   // mode
-  std::vector<JointCommandModes> modes_;
   JointCommandModes current_mode_;
+  JointCommandModes mode_;
 
-  // sim
+  // state
   double position_;
   double velocity_;
   double effort_;
-  gazebo::physics::JointPtr sim_joint_;
 
   // control
-  control_toolbox::Pid pid_;
   double position_cmd_;
   double velocity_cmd_;
   double effort_cmd_;
-  hardware_interface::JointHandle& position_handle_;
-  hardware_interface::JointHandle& velocity_handle_;
-  hardware_interface::JointHandle& effort_handle_;
+  handle_ptr position_handle_;
+  handle_ptr velocity_handle_;
+  handle_ptr effort_handle_;
+  control_toolbox::Pid pid_controller_;
 
 
+ private:
+  void initHandles();
  public:
 
-  /*
-   *
-   */
   bool initPid();
+  void initLimits(const urdf::Model* urdf_model);
 
+  inline bool hasLimits(){ return has_limits_; }
+  inline bool hasSoftLimits() {return has_soft_limits_; }
+
+  double computeEffortCommand(const double position_desired, const ros::Duration& dt);
   /*
    *
    */
   bool hasMode(const hardware_interface::JointCommandModes& mode) const;
-
-  void registerPositionLimits(const urdf::Model *const urdf_model);
-  void registerVelocityLimits(const urdf::Model *const urdf_model);
-  void registerEffortLimits(const urdf::Model *const urdf_model);
 
   double computeError(const double& joint_desired_position) const;
 
   /*
    * Getters & Setters
    */
-  inline const std::string &GetName() const { return name_; }
+  inline const std::string &getName() const { return name_; }
   inline void setName(const std::string &name) { name_ = name; }
 
   inline int getType() const { return type_; }
@@ -115,17 +135,11 @@ class JointData {
   inline double getEffortLimit() const { return effort_limit_; }
   inline void setEffortLimit(double effort_limit) { effort_limit_ = effort_limit; }
 
-  inline const std::vector<JointCommandModes> &getModes() const { return modes_; }
-  inline void setModes(const std::vector<JointCommandModes> &modes) { modes_ = modes; }
+  inline const JointCommandModes &getMode() const { return mode_; }
+  inline void setModes(const JointCommandModes &mode) { mode_ = mode; }
 
   inline hardware_interface::JointCommandModes getCurrentMode() const { return current_mode_; }
-  inline void SetCurrentMode(hardware_interface::JointCommandModes current_mode) { current_mode_ = current_mode; }
-
-  inline const gazebo::physics::JointPtr &getSimJoint() const { return sim_joint_; }
-  inline void setSimJoint(const gazebo::physics::JointPtr &sim_joint) { sim_joint_ = sim_joint; }
-
-  inline const control_toolbox::Pid &getPid() const { return pid_; }
-  inline void setPid(const control_toolbox::Pid &pid) { pid_ = pid; }
+  inline void setCurrentMode(hardware_interface::JointCommandModes current_mode) { current_mode_ = current_mode; }
 
   inline double getPosition() const { return position_; }
   inline double& getPosition() { return position_; }
@@ -150,8 +164,18 @@ class JointData {
   inline double getEffortCmd() const { return effort_cmd_; }
   inline double& getEffortCmd() { return effort_cmd_; }
   inline void setEffortCmd(double eff_cmd) { effort_cmd_ = eff_cmd; }
-};
 
-using JointDataVector = std::vector<JointData>;
+  inline JointStateHandle& getStateHandle() { return *state_handle_; }
+  inline JointModeHandle& getModeHandle() { return *mode_handle_; }
+  inline JointHandle& getEffortHandle(){ return *effort_handle_; }
+  inline JointHandle& getPositionHandle(){return *position_handle_;}
+  inline JointHandle& getVelocityHandle(){return *velocity_handle_;}
+  inline EffortJointSoftLimitsHandle& getEffortLimitsHandle() { return *effort_limits_handle_; }
+  inline PositionJointSoftLimitsHandle& getPositionLimitsHandle() { return *position_limits_handle_; }
+  inline VelocityJointSoftLimitsHandle& getVelocityLimitsHandle() { return *velocity_limits_handle_; }
+  inline EffortJointSaturationHandle& getEffortSatHandle() { return *effort_sat_handle_; }
+  inline PositionJointSaturationHandle& getPositionSatHandle() { return *position_sat_handle_; }
+  inline VelocityJointSaturationHandle& getVelocitySatHandle() { return *velocity_sat_handle_; }
+};
 
 }
