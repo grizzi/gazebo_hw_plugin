@@ -18,8 +18,7 @@ JointData::JointData(const std::string &name) :
   setPositionCmd(0.0);
   setVelocityCmd(0.0);
   setEffortCmd(0.0);
-  setCurrentMode(JointCommandModes::NOMODE);
-
+  setMode(JointCommandModes::NOMODE);
   initHandles();
 }
 
@@ -39,6 +38,7 @@ bool JointData::initPid() {
     ROS_ERROR_STREAM("Failed to initialize pid controller for joint" << getName());
     return false;
   }
+  return true;
 }
 
 double JointData::computeEffortCommand(const double position_desired, const ros::Duration &dt) {

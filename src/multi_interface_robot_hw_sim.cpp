@@ -54,10 +54,14 @@ bool MultiInterfaceRobotHWSim::initSim(
 
   std::vector<std::string> names;
   for (const auto& joint_urdf : urdf_model->joints_){
-    if (joint_urdf.second->type != urdf::Joint::UNKNOWN){
-      names.push_back(joint_urdf.first);
-      ROS_INFO_STREAM("Found joint: " << names.back());
-    }
+    if (joint_urdf.second->type == urdf::Joint::FIXED)
+      continue;
+
+    if (joint_urdf.second->type == urdf::Joint::UNKNOWN)
+      continue;
+
+    names.push_back(joint_urdf.first);
+    ROS_INFO_STREAM("Found joint: " << names.back());
   }
 
   joints_ = JointDataGroup(*urdf_model);
@@ -130,28 +134,27 @@ void MultiInterfaceRobotHWSim::readSim(ros::Time time, ros::Duration period) {
     }
     joint_data->setVelocity(sim_joints_[i]->GetVelocity(0));
     joint_data->setEffort(sim_joints_[i]->GetForce((unsigned int) (0)));
+    i++;
   }
 }
 
 void MultiInterfaceRobotHWSim::writeSim(ros::Time time, ros::Duration period) {
 
-//  if (e_stop_active_) {
-//    if (!last_e_stop_active_) {
-//      last_joint_position_command_ = joint_position_;
-//      last_e_stop_active_ = true;
-//    }
-//    joint_position_command_ = last_joint_position_command_;
-//  } else {
-//    last_e_stop_active_ = false;
-//  }
-
   joints_.enforceLimits(period);
   size_t j = 0;
   for (auto &joint : joints_.getJoints()) {
+    if (e_stop_active_)
+      joint->setMode(JointCommandModes::EMERGENCY_STOP);
 
     const auto mode = joint->getMode();
     if (joint->getCurrentMode() != mode) {
-      ROS_INFO_STREAM("Joint " << joint->getName() << " switched to [" << mapModeToString.at(mode) << "] mode.");
+      try {
+        ROS_INFO_STREAM("Joint " << joint->getName() << " switched to [" << mapModeToString.at(mode) << "] mode.");
+      }
+      catch (std::out_of_range& exc){
+        ROS_FATAL_STREAM("Unrecognized mode: " << (int)mode);
+        throw std::runtime_error("Unrecognized mode");
+      }
       joint->setCurrentMode(mode);
       joint_initial_position_at_switch_[j] = joint->getPosition();
     }
@@ -205,9 +208,11 @@ void MultiInterfaceRobotHWSim::writeSim(ros::Time time, ros::Duration period) {
         break;
       }
 
-      default:ROS_ERROR_STREAM("Mode: " << (int) joint->getMode() << " not handled/unrecognized");
+      default:
+        ROS_ERROR_STREAM("Mode: " << (int) joint->getMode() << " not handled/unrecognized");
         sim_joints_[j]->SetForce(0, 0);
     }
+    j++;
   }
 }
 

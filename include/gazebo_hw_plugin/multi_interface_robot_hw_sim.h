@@ -34,12 +34,6 @@ namespace gazebo_hw_plugin
 {
 
 using mode_t = hardware_interface::JointCommandModes;
-const std::map<mode_t, std::string> mapModeToString{{mode_t::ERROR, "ERROR"},
-                                                    {mode_t::EMERGENCY_STOP, "EMERGENCY_STOP"},
-                                                    {mode_t::NOMODE, "NOMODE"},
-                                                    {mode_t::MODE_POSITION, "MODE_POSITION"},
-                                                    {mode_t::MODE_VELOCITY, "MODE_VELOCITY"},
-                                                    {mode_t::MODE_EFFORT, "MODE_EFFORT"}};
 
 class MultiInterfaceRobotHWSim : public gazebo_hw_plugin::RobotHWSim
 {

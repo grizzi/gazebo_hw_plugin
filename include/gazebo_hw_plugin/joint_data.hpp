@@ -42,6 +42,15 @@ using namespace joint_limits_interface;
 
 namespace gazebo_hw_plugin {
 
+using mode_t = JointCommandModes;
+
+const std::map<mode_t, std::string> mapModeToString{{mode_t::ERROR, "ERROR"},
+                                                    {mode_t::EMERGENCY_STOP, "EMERGENCY_STOP"},
+                                                    {mode_t::NOMODE, "NOMODE"},
+                                                    {mode_t::MODE_POSITION, "MODE_POSITION"},
+                                                    {mode_t::MODE_VELOCITY, "MODE_VELOCITY"},
+                                                    {mode_t::MODE_EFFORT, "MODE_EFFORT"}};
+
 class JointData {
  public:
   using handle_ptr = std::unique_ptr<JointHandle>;
@@ -58,7 +67,7 @@ class JointData {
   using vel_sat_handle_ptr = std::unique_ptr<VelocityJointSaturationHandle>;
 
 
-  JointData(const std::string& name);
+  explicit JointData(const std::string& name);
   ~JointData() = default;
 
  private:
@@ -100,22 +109,39 @@ class JointData {
 
 
  private:
+  //! @brief Init all handles
   void initHandles();
  public:
 
+  //! @brief Init the PID controller from ROS param server
+  // The controller looks for the PID parameters under the namespace
+  // "/gazebo_ros_control/pid_gains/<joint_name>". If these are not found
+  // initialization fails. The gains are reconfigurable parameters and can be changed using dynamic_reconfigure
+  // e.g. rosrun rqt_reconfigure rqt_reconfigure
+  //! @return false if the controller failed to initialize
   bool initPid();
+
+  //! @brief Init limits from the urdf model if found, otherwise from the parameter server
+  // The soft and hard limits are looked for in the urdf model first. If not found, they
+  // are then searched in the "gazebo_ros_control/limits/joint_limits/limits" namespace/
+  //! @param urdf_model The urdf model of the robot
   void initLimits(const urdf::Model* urdf_model);
 
+  //! Check for joint limits
+  //! @return true if the joint has hard limits
   inline bool hasLimits(){ return has_limits_; }
+
+  //! Check for soft joint limits
+  //! @return true if the joint has soft joint limits
   inline bool hasSoftLimits() {return has_soft_limits_; }
 
+  //! @brief Compute the effort command given a desired position
+  //! The internal pid is used to compute the effort given the error and the control period
+  //! which is used to compute the error derivative and integral term.
+  //! @param position_desired The desired joint position
+  //! @param dt The control interval
+  //! @return The effort control input
   double computeEffortCommand(const double position_desired, const ros::Duration& dt);
-  /*
-   *
-   */
-  bool hasMode(const hardware_interface::JointCommandModes& mode) const;
-
-  double computeError(const double& joint_desired_position) const;
 
   /*
    * Getters & Setters
@@ -136,7 +162,7 @@ class JointData {
   inline void setEffortLimit(double effort_limit) { effort_limit_ = effort_limit; }
 
   inline const JointCommandModes &getMode() const { return mode_; }
-  inline void setModes(const JointCommandModes &mode) { mode_ = mode; }
+  inline void setMode(const JointCommandModes &mode) { mode_ = mode; }
 
   inline hardware_interface::JointCommandModes getCurrentMode() const { return current_mode_; }
   inline void setCurrentMode(hardware_interface::JointCommandModes current_mode) { current_mode_ = current_mode; }

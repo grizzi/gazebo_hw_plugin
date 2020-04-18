@@ -44,6 +44,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_library(multi_interface_robot_hw_sim
         src/joint_data.cpp
+        src/joint_data_group.cpp
         src/multi_interface_robot_hw_sim.cpp)
 target_link_libraries(multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 
