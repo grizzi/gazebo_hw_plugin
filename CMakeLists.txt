@@ -48,6 +48,12 @@ add_library(multi_interface_robot_hw_sim
         src/multi_interface_robot_hw_sim.cpp)
 target_link_libraries(multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 
+## Test
+#catkin_add_gtest(limits_test test/limits.cpp)
+#target_link_libraries(limits_test multi_interface_robot_hw_sim ${catkin_LIBRARIES})
+#add_dependencies(limits_test multi_interface_robot_hw_sim ${catkin_EXPORTED_TARGETS})
+
+
 ## Install
 install(TARGETS ${PROJECT_NAME} multi_interface_robot_hw_sim
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
