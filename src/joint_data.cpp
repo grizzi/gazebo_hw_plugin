@@ -8,8 +8,6 @@
 
 #include "gazebo_hw_plugin/joint_data.hpp"
 
-// TODO fill with remaining functions
-
 using namespace gazebo_hw_plugin;
 
 JointData::JointData(const std::string &name) :
@@ -30,10 +28,9 @@ void JointData::initHandles() {
   state_handle_ = std::make_unique<JointStateHandle>(name_, &position_, &velocity_, &effort_);
   mode_handle_ = std::make_unique<JointModeHandle>(name_, &mode_);
 
-  position_handle_ = std::make_unique<JointHandle>(name_, position_cmd_);
-  velocity_handle_ = std::make_unique<JointHandle>(name_, velocity_cmd_);
-  effort_handle_ = std::make_unique<JointHandle>(name_, effort_cmd_);
-
+  position_handle_ = std::make_unique<JointHandle>(*state_handle_, &position_cmd_);
+  velocity_handle_ = std::make_unique<JointHandle>(*state_handle_, &velocity_cmd_);
+  effort_handle_ = std::make_unique<JointHandle>(*state_handle_, &effort_cmd_);
 }
 
 bool JointData::initPid() {
@@ -110,11 +107,11 @@ void JointData::initLimits(const urdf::Model *urdf_model) {
   if (limits.has_effort_limits)
     effort_limit_ = limits.max_effort;
 
-  effort_limits_handle_ = std::make_unique<EffortJointSoftLimitsHandle>(effort_handle_, limits, soft_limits);
-  position_limits_handle_ = std::make_unique<PositionJointSoftLimitsHandle>(position_handle_, limits, soft_limits);
-  velocity_limits_handle_ = std::make_unique<VelocityJointSoftLimitsHandle>(velocity_handle_, limits, soft_limits);
+  effort_limits_handle_ = std::make_unique<EffortJointSoftLimitsHandle>(*effort_handle_, limits, soft_limits);
+  position_limits_handle_ = std::make_unique<PositionJointSoftLimitsHandle>(*position_handle_, limits, soft_limits);
+  velocity_limits_handle_ = std::make_unique<VelocityJointSoftLimitsHandle>(*velocity_handle_, limits, soft_limits);
 
-  effort_sat_handle_ = std::make_unique<EffortJointSaturationHandle>(effort_handle_, limits);
-  position_sat_handle_ = std::make_unique<PositionJointSaturationHandle>(position_handle_, limits);
-  velocity_sat_handle_ = std::make_unique<VelocityJointSaturationHandle>(velocity_handle_, limits);
+  effort_sat_handle_ = std::make_unique<EffortJointSaturationHandle>(*effort_handle_, limits);
+  position_sat_handle_ = std::make_unique<PositionJointSaturationHandle>(*position_handle_, limits);
+  velocity_sat_handle_ = std::make_unique<VelocityJointSaturationHandle>(*velocity_handle_, limits);
 }

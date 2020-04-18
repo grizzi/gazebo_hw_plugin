@@ -59,7 +59,7 @@ class JointData {
 
 
   JointData(const std::string& name);
-  ~JointData();
+  ~JointData() = default;
 
  private:
   std::string name_;
@@ -178,4 +178,5 @@ class JointData {
   inline VelocityJointSaturationHandle& getVelocitySatHandle() { return *velocity_sat_handle_; }
 };
 
+using joint_data_ptr = std::shared_ptr<JointData>;
 }
