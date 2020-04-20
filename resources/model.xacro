@@ -53,11 +53,13 @@
         </inertial>
     </link>
 
-    <joint name="joint1" type="continuous">
+    <!--    Joint 1 has limits, in urdf -->
+    <joint name="joint1" type="revolute">
         <parent link="link1"/>
         <child link="link2"/>
         <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
+        <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" />
         <dynamics damping="0.7"/>
     </joint>
 
@@ -88,6 +90,7 @@
         </inertial>
     </link>
 
+    <!--    Joint 2 has no limits in urdf but limits in params-->
     <joint name="joint2" type="continuous">
         <parent link="link2"/>
         <child link="link3"/>

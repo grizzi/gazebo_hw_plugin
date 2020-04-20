@@ -53,6 +53,11 @@ target_link_libraries(multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 #target_link_libraries(limits_test multi_interface_robot_hw_sim ${catkin_LIBRARIES})
 #add_dependencies(limits_test multi_interface_robot_hw_sim ${catkin_EXPORTED_TARGETS})
 
+if(CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(test_limits test/launch/limits.test test/limits.cpp)
+    target_link_libraries(test_limits multi_interface_robot_hw_sim ${catkin_LIBRARIES})
+endif()
 
 ## Install
 install(TARGETS ${PROJECT_NAME} multi_interface_robot_hw_sim
