@@ -107,6 +107,9 @@ void JointData::initLimits(const urdf::Model *urdf_model) {
   if (limits.has_effort_limits)
     effort_limit_ = limits.max_effort;
 
+  if (limits.has_velocity_limits)
+    velocity_limit_ = limits.max_velocity;
+
   effort_limits_handle_ = std::make_unique<EffortJointSoftLimitsHandle>(*effort_handle_, limits, soft_limits);
   position_limits_handle_ = std::make_unique<PositionJointSoftLimitsHandle>(*position_handle_, limits, soft_limits);
   velocity_limits_handle_ = std::make_unique<VelocityJointSoftLimitsHandle>(*velocity_handle_, limits, soft_limits);
@@ -114,4 +117,26 @@ void JointData::initLimits(const urdf::Model *urdf_model) {
   effort_sat_handle_ = std::make_unique<EffortJointSaturationHandle>(*effort_handle_, limits);
   position_sat_handle_ = std::make_unique<PositionJointSaturationHandle>(*position_handle_, limits);
   velocity_sat_handle_ = std::make_unique<VelocityJointSaturationHandle>(*velocity_handle_, limits);
+}
+
+void JointData::enforceSaturationLimits(ros::Duration& dt) {
+  if (hasLimits()){
+    effort_sat_handle_->enforceLimits(dt);    // ros::Duration not used internally
+    position_sat_handle_->enforceLimits(dt);
+    velocity_sat_handle_->enforceLimits(dt);
+  }
+}
+
+void JointData::enforceSoftLimits(ros::Duration &dt) {
+  if (hasSoftLimits()){
+    effort_limits_handle_->enforceLimits(dt);
+    position_limits_handle_->enforceLimits(dt);
+    velocity_limits_handle_->enforceLimits(dt);
+  }
+}
+
+void JointData::resetCommands(const double position, const double velocity, const double effort){
+  setPositionCmd(position);
+  setVelocityCmd(velocity);
+  setEffortCmd(effort);
 }

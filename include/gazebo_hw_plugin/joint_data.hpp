@@ -81,6 +81,7 @@ class JointData {
   bool has_soft_limits_;
   double lower_limit_;
   double upper_limit_;
+  double velocity_limit_;
   double effort_limit_;
   eff_soft_handle_ptr effort_limits_handle_;
   pos_soft_handle_ptr position_limits_handle_;
@@ -109,16 +110,20 @@ class JointData {
 
 
  private:
-  //! @brief Init all handles
-  void initHandles();
+  /**
+   * @brief Init all handles
+   */
+   void initHandles();
  public:
 
-  //! @brief Init the PID controller from ROS param server
-  // The controller looks for the PID parameters under the namespace
-  // "/gazebo_ros_control/pid_gains/<joint_name>". If these are not found
-  // initialization fails. The gains are reconfigurable parameters and can be changed using dynamic_reconfigure
-  // e.g. rosrun rqt_reconfigure rqt_reconfigure
-  //! @return false if the controller failed to initialize
+  /**
+   * @brief Init the PID controller from ROS param server
+   * The controller looks for the PID parameters under the namespace
+   * "/gazebo_ros_control/pid_gains/<joint_name>". If these are not found
+   * initialization fails. The gains are reconfigurable parameters and can be changed using dynamic_reconfigure
+   * e.g. rosrun rqt_reconfigure rqt_reconfigure
+   * @return false if the controller failed to initialize
+   */
   bool initPid();
 
   //! @brief Init limits from the urdf model if found, otherwise from the parameter server
@@ -127,22 +132,48 @@ class JointData {
   //! @param urdf_model The urdf model of the robot
   void initLimits(const urdf::Model* urdf_model);
 
-  //! Check for joint limits
-  //! @return true if the joint has hard limits
+
+  /**
+   * @brief Check for joint limits
+   * @return true if the joint has hard limits
+   */
   inline bool hasLimits(){ return has_limits_; }
 
-  //! Check for soft joint limits
-  //! @return true if the joint has soft joint limits
+  /**
+   * @brief Check for soft joint limits
+   * @return true if the joint has soft joint limits
+   */
   inline bool hasSoftLimits() {return has_soft_limits_; }
 
-  //! @brief Compute the effort command given a desired position
-  //! The internal pid is used to compute the effort given the error and the control period
-  //! which is used to compute the error derivative and integral term.
-  //! @param position_desired The desired joint position
-  //! @param dt The control interval
-  //! @return The effort control input
+  /**
+   * @brief Compute the effort command given a desired position
+   * The internal pid is used to compute the effort given the error and the control period
+   * which is used to compute the error derivative and integral term.
+   * @param position_desired The desired joint position
+   * @param dt The control interval
+   * @return The effort control input
+   */
   double computeEffortCommand(const double position_desired, const ros::Duration& dt);
 
+  /**
+   * @brief Enforce all saturation limits
+   * @param dt: used to compute position/velocity limits given velocity/acceleration limits
+   */
+  void enforceSaturationLimits(ros::Duration& dt);
+
+  /**
+   * @brief Enforce all soft limits
+   * @param dt: used to compute position/velocity limits given velocity acceleration limits
+   */
+  void enforceSoftLimits(ros::Duration& dt);
+
+  /**
+   * @brief Reset commands
+   * @param position
+   * @param velocity
+   * @param effort
+   */
+  void resetCommands(const double position, const double velocity, const double effort);
   /*
    * Getters & Setters
    */
@@ -160,6 +191,9 @@ class JointData {
 
   inline double getEffortLimit() const { return effort_limit_; }
   inline void setEffortLimit(double effort_limit) { effort_limit_ = effort_limit; }
+
+  inline double getVelocityLimit() const { return velocity_limit_; }
+  inline void setVelocityLimit(double velocity_limit) { velocity_limit_ = velocity_limit; }
 
   inline const JointCommandModes &getMode() const { return mode_; }
   inline void setMode(const JointCommandModes &mode) { mode_ = mode; }
