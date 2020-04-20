@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
-  <!--  PID params-->
-  <rosparam file="$(find gazebo_hw_plugin)/test/config/joint_controllers.yaml" command="load"/>
+  <!--  Joint limits & PID -->
+  <rosparam file="$(find gazebo_hw_plugin)/test/config/joint_control.yaml" command="load"/>
 
   <!--  Robot description-->
   <param name="robot_description"

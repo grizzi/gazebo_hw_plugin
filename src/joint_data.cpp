@@ -33,7 +33,7 @@ void JointData::initHandles() {
 }
 
 bool JointData::initPid() {
-  const ros::NodeHandle nh("/gazebo_ros_control/pid_gains/" + getName());
+  const ros::NodeHandle nh("/joint_control/pid_gains/" + getName());
   if (!pid_controller_.init(nh, true)) {
     ROS_ERROR_STREAM("Failed to initialize pid controller for joint" << getName());
     return false;
@@ -84,7 +84,7 @@ void JointData::initLimits(const urdf::Model *urdf_model) {
   }
 
   // Get limits from the parameter server.
-  const ros::NodeHandle nh("/gazebo_ros_control/limits");
+  const ros::NodeHandle nh("/joint_control");
   if (joint_limits_interface::getJointLimits(name_, nh, limits)) has_limits_ = true;
   if (!has_limits_) return;
 
