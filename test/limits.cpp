@@ -60,12 +60,10 @@ TEST(LimitsTest, hardLimitsJointUrdf){
 
 TEST(LimitsTest, hardLimitsJointGroupUrdf){
   urdf::Model model;
-//  <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" />
   ASSERT_TRUE(model.initParam("/robot_description"));
 
   gazebo_hw_plugin::JointDataGroup joint_data_group(model);
-  std::vector<std::string> names{"joint1", "joint2"};
-  ASSERT_TRUE(joint_data_group.initFromNames(names));
+  ASSERT_TRUE(joint_data_group.initFromModel(model));
 
   auto joint = joint_data_group.getJoints().front();
   ASSERT_TRUE(joint->hasLimits());

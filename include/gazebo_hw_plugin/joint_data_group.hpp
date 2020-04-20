@@ -20,7 +20,19 @@ struct JointDataGroup {
   JointDataGroup(const urdf::Model &urdf_model) :
       urdf_model_(urdf_model) {}
 
+  /**
+   * @brief Init the joint data group from a set of joint names
+   * @param joint_names
+   * @return true if succeded to initialize from joint name strings
+   */
   bool initFromNames(std::vector<std::string> &joint_names);
+
+  /**
+   * @brief Init the joint data group from all not fixed joints in the model
+   * @param model
+   * @return true if succeeded to initialize from the model.
+   */
+  bool initFromModel(const urdf::Model& model);
 
  private:
   //! @brief Init all the joints limits interfaces

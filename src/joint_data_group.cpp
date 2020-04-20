@@ -25,6 +25,22 @@ bool JointDataGroup::initFromNames(std::vector<std::string> &joint_names) {
   return true;
 }
 
+bool JointDataGroup::initFromModel(const urdf::Model &model) {
+  for (const auto& joint_urdf : model.joints_){
+    if (joint_urdf.second->type == urdf::Joint::FIXED)
+      continue;
+
+    if (joint_urdf.second->type == urdf::Joint::UNKNOWN)
+      continue;
+
+    std::string joint_name = joint_urdf.first;
+    joints_.push_back(std::make_shared<JointData>(joint_name));
+  }
+  initLimits();
+  registerHandles();
+  if (!initPid()) return false;
+}
+
 void JointDataGroup::initLimits() {
   for (auto &joint : joints_)
     joint->initLimits(&urdf_model_);
